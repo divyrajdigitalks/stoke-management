@@ -27,11 +27,7 @@ export default function LoginPage() {
     // Demo OTP validation
     // Any 6 digit OTP will work for now
 
-    if (otp.length !== 6) {
-      alert("Please enter 6 digit OTP");
-      return;
-    }
-
+    
     // Redirect after login
     window.location.href = "/";
   };
@@ -124,19 +120,19 @@ export default function LoginPage() {
                   Enter OTP
                 </label>
 
-                <input
-                  type="text"
-                  maxLength={6}
-                  placeholder="Enter 6 digit OTP"
-                  value={otp}
-                  onChange={(e) =>
-                    setOtp(
-                      e.target.value.replace(/\D/g, "")
-                    )
-                  }
-                  className="w-full py-4 px-5 bg-zinc-50 border border-zinc-200 rounded-2xl text-center tracking-[0.5em] text-2xl font-black focus:ring-4 focus:ring-orange-500/10 focus:border-orange-500 outline-none transition-all dark:bg-zinc-800 dark:border-zinc-700 dark:text-white"
-                  required
-                />
+              <input
+  type="text"
+  maxLength={6}
+  placeholder="******"
+  value={otp}
+  onChange={(e) =>
+    setOtp(
+      e.target.value.replace(/\D/g, "")
+    )
+  }
+  className="w-full py-4 px-5 bg-zinc-50 border border-zinc-200 rounded-2xl text-center tracking-[0.5em] text-2xl font-black focus:ring-4 focus:ring-orange-500/10 focus:border-orange-500 outline-none transition-all dark:bg-zinc-800 dark:border-zinc-700 dark:text-white"
+  required
+/>
               </div>
 
               <div className="space-y-3">
