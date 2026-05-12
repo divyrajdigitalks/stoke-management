@@ -1,7 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { Search, Filter, Download, Eye, CheckCircle2, Clock, Truck } from "lucide-react";
+import { Search, Filter, Download, Eye, CheckCircle2, Clock, Truck, Plus, ShoppingCart, User, IndianRupee, Save } from "lucide-react";
+import { Modal } from "@/components/Modal";
 
 const initialOrders = [
   { id: "ORD-2026-001", customer: "Radha Boutique", items: 12, total: 45000, status: "Pending", date: "2026-05-11" },
@@ -10,6 +11,35 @@ const initialOrders = [
 ];
 
 export default function OrdersPage() {
+  const [orders, setOrders] = useState(initialOrders);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [newOrder, setNewOrder] = useState({
+    customer: "",
+    items: "",
+    total: "",
+    status: "Pending"
+  });
+
+  const handleAddOrder = (e: React.FormEvent) => {
+    e.preventDefault();
+    const id = `ORD-2026-${String(orders.length + 1).padStart(3, '0')}`;
+    const date = new Date().toISOString().split('T')[0];
+    setOrders([{
+      ...newOrder,
+      id,
+      date,
+      items: Number(newOrder.items),
+      total: Number(newOrder.total)
+    }, ...orders]);
+    setIsModalOpen(false);
+    setNewOrder({
+      customer: "",
+      items: "",
+      total: "",
+      status: "Pending"
+    });
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
@@ -17,13 +47,22 @@ export default function OrdersPage() {
           <h1 className="text-2xl font-bold tracking-tight">Wholesale Orders</h1>
           <p className="text-zinc-500">Track and manage bulk textile orders from your clients.</p>
         </div>
-        <button 
-          onClick={() => alert("Downloading all orders...")}
-          className="flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium bg-white border border-zinc-200 rounded-lg hover:bg-zinc-50 transition-colors dark:bg-zinc-900 dark:border-zinc-800"
-        >
-          <Download className="w-4 h-4" />
-          Export Orders
-        </button>
+        <div className="flex items-center gap-3">
+          <button 
+            onClick={() => alert("Downloading all orders...")}
+            className="flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-bold bg-white border border-zinc-200 rounded-xl hover:bg-zinc-50 transition-all dark:bg-zinc-900 dark:border-zinc-800"
+          >
+            <Download className="w-4 h-4" />
+            Export
+          </button>
+          <button 
+            onClick={() => setIsModalOpen(true)}
+            className="flex items-center justify-center gap-2 px-6 py-2.5 text-sm font-bold text-white bg-orange-600 rounded-xl hover:bg-orange-700 transition-all shadow-lg shadow-orange-500/20 active:scale-95"
+          >
+            <Plus className="w-5 h-5" />
+            Add Order
+          </button>
+        </div>
       </div>
 
       <div className="flex flex-wrap items-center gap-4 p-4 bg-white border border-zinc-200 rounded-xl dark:bg-zinc-900 dark:border-zinc-800">
@@ -57,7 +96,7 @@ export default function OrdersPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-zinc-100 dark:divide-zinc-800">
-              {initialOrders.map((order) => (
+              {orders.map((order) => (
                 <tr key={order.id} className="hover:bg-zinc-50 dark:hover:bg-zinc-800/50 transition-colors">
                   <td className="px-6 py-4 font-mono font-bold text-blue-600 dark:text-blue-400">{order.id}</td>
                   <td className="px-6 py-4 font-medium">{order.customer}</td>
@@ -91,6 +130,94 @@ export default function OrdersPage() {
           </table>
         </div>
       </div>
+
+      {/* Add Order Modal */}
+      <Modal 
+        isOpen={isModalOpen} 
+        onClose={() => setIsModalOpen(false)} 
+        title="Create New Bulk Order"
+        className="max-w-md"
+      >
+        <form onSubmit={handleAddOrder} className="space-y-6">
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <label className="text-[10px] font-black uppercase tracking-widest text-zinc-400 ml-1">Customer Name</label>
+              <div className="relative">
+                <User className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400" />
+                <input 
+                  type="text" 
+                  placeholder="e.g. Radha Boutique" 
+                  className="w-full pl-11 pr-4 py-3.5 bg-zinc-50 border border-zinc-200 rounded-2xl focus:ring-2 focus:ring-orange-500/20 outline-none dark:bg-zinc-800 dark:border-zinc-700 transition-all font-bold"
+                  value={newOrder.customer}
+                  onChange={(e) => setNewOrder({...newOrder, customer: e.target.value})}
+                  required
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <label className="text-[10px] font-black uppercase tracking-widest text-zinc-400 ml-1">Total Items</label>
+                <div className="relative">
+                  <ShoppingCart className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400" />
+                  <input 
+                    type="number" 
+                    placeholder="12" 
+                    className="w-full pl-11 pr-4 py-3.5 bg-zinc-50 border border-zinc-200 rounded-2xl focus:ring-2 focus:ring-orange-500/20 outline-none dark:bg-zinc-800 dark:border-zinc-700 transition-all font-bold"
+                    value={newOrder.items}
+                    onChange={(e) => setNewOrder({...newOrder, items: e.target.value})}
+                    required
+                  />
+                </div>
+              </div>
+              <div className="space-y-2">
+                <label className="text-[10px] font-black uppercase tracking-widest text-zinc-400 ml-1">Total Amount</label>
+                <div className="relative">
+                  <IndianRupee className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400" />
+                  <input 
+                    type="number" 
+                    placeholder="45000" 
+                    className="w-full pl-11 pr-4 py-3.5 bg-zinc-50 border border-zinc-200 rounded-2xl focus:ring-2 focus:ring-orange-500/20 outline-none dark:bg-zinc-800 dark:border-zinc-700 transition-all font-bold"
+                    value={newOrder.total}
+                    onChange={(e) => setNewOrder({...newOrder, total: e.target.value})}
+                    required
+                  />
+                </div>
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-[10px] font-black uppercase tracking-widest text-zinc-400 ml-1">Order Status</label>
+              <select 
+                className="w-full px-5 py-3.5 bg-zinc-50 border border-zinc-200 rounded-2xl focus:ring-2 focus:ring-orange-500/20 outline-none dark:bg-zinc-800 dark:border-zinc-700 transition-all font-bold appearance-none"
+                value={newOrder.status}
+                onChange={(e) => setNewOrder({...newOrder, status: e.target.value})}
+              >
+                <option value="Pending">Pending</option>
+                <option value="Confirmed">Confirmed</option>
+                <option value="Delivered">Delivered</option>
+              </select>
+            </div>
+          </div>
+
+          <div className="flex gap-4 pt-4 border-t border-zinc-100 dark:border-zinc-800">
+            <button 
+              type="button"
+              onClick={() => setIsModalOpen(false)}
+              className="flex-1 py-4 px-6 border border-zinc-200 dark:border-zinc-700 rounded-2xl font-bold text-sm hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-all active:scale-[0.98]"
+            >
+              Cancel
+            </button>
+            <button 
+              type="submit"
+              className="flex-[2] py-4 px-6 bg-orange-600 text-white rounded-2xl font-bold text-sm hover:bg-orange-700 shadow-xl shadow-orange-500/20 transition-all active:scale-[0.98] flex items-center justify-center gap-2"
+            >
+              <Save className="w-5 h-5" />
+              Create Order
+            </button>
+          </div>
+        </form>
+      </Modal>
     </div>
   );
 }

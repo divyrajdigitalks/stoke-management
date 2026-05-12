@@ -29,6 +29,7 @@ export default function LoginPage() {
 
     
     // Redirect after login
+    localStorage.setItem("shop_auth", "true");
     window.location.href = "/";
   };
 

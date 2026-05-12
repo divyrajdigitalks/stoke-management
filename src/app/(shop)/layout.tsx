@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { Search, ShoppingCart, User, Menu, X } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { cn } from "@/lib/utils";
 
 export default function ShopLayout({
@@ -11,7 +11,20 @@ export default function ShopLayout({
   children: React.ReactNode;
 }) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [cartCount, setCartCount] = useState(3);
+  const [cartCount, setCartCount] = useState(0);
+
+  // Sync cart count
+  const updateCartCount = () => {
+    const cart = JSON.parse(localStorage.getItem("shop_cart") || "[]");
+    const count = cart.reduce((sum: number, item: any) => sum + item.quantity, 0);
+    setCartCount(count);
+  };
+
+  useEffect(() => {
+    updateCartCount();
+    window.addEventListener("cartUpdated", updateCartCount);
+    return () => window.removeEventListener("cartUpdated", updateCartCount);
+  }, []);
 
   return (
     <div className="min-h-screen bg-zinc-50 dark:bg-zinc-950">

@@ -5,10 +5,10 @@ import { Plus, Search, Edit2, Trash2, Filter, ArrowUpDown, Package, Save, Upload
 import { Modal } from "@/components/Modal";
 
 const initialProducts = [
-  { id: 1, name: "Banarasi Silk Saree", sku: "SAR-001", category: "Saree", price: 5500, wholesale: 4200, stock: 25, unit: "PCS" },
-  { id: 2, name: "Cotton Printed Kurti", sku: "KUR-002", category: "Kurti", price: 1200, wholesale: 850, stock: 150, unit: "PCS" },
-  { id: 3, name: "Bridal Wear Lehenga", sku: "LHG-005", category: "Lehenga", price: 15000, wholesale: 11500, stock: 10, unit: "SET" },
-  { id: 4, name: "Embroidered Dress Material", sku: "DRM-010", category: "Dress Materials", price: 2500, wholesale: 1800, stock: 60, unit: "PCS" },
+  { id: 1, name: "Banarasi Silk Saree", sku: "SAR-001", category: "Saree", price: 5500, wholesale: 4200, stock: 25, unit: "PCS", asOfDate: "2026-05-10" },
+  { id: 2, name: "Cotton Printed Kurti", sku: "KUR-002", category: "Kurti", price: 1200, wholesale: 850, stock: 150, unit: "PCS", asOfDate: "2026-05-11" },
+  { id: 3, name: "Bridal Wear Lehenga", sku: "LHG-005", category: "Lehenga", price: 15000, wholesale: 11500, stock: 10, unit: "SET", asOfDate: "2026-05-12" },
+  { id: 4, name: "Embroidered Dress Material", sku: "DRM-010", category: "Dress Materials", price: 2500, wholesale: 1800, stock: 60, unit: "PCS", asOfDate: "2026-05-12" },
 ];
 
 export default function ProductsPage() {
@@ -23,6 +23,7 @@ export default function ProductsPage() {
     wholesale: "",
     stock: "",
     unit: "PCS",
+    asOfDate: new Date().toISOString().split('T')[0],
     description: ""
   });
 
@@ -45,6 +46,7 @@ export default function ProductsPage() {
       wholesale: "",
       stock: "",
       unit: "PCS",
+      asOfDate: new Date().toISOString().split('T')[0],
       description: ""
     });
   };
@@ -101,6 +103,7 @@ export default function ProductsPage() {
                 <th className="px-6 py-4 font-bold tracking-wider text-right">Retail</th>
                 <th className="px-6 py-4 font-bold tracking-wider text-right text-orange-600">Wholesale</th>
                 <th className="px-6 py-4 font-bold tracking-wider text-center">Stock</th>
+                <th className="px-6 py-4 font-bold tracking-wider text-center">As of Date</th>
                 <th className="px-6 py-4 font-bold tracking-wider text-right">Actions</th>
               </tr>
             </thead>
@@ -136,6 +139,9 @@ export default function ProductsPage() {
                       </span>
                       <span className="text-[10px] font-bold text-zinc-400 uppercase">{product.unit}</span>
                     </div>
+                  </td>
+                  <td className="px-6 py-4 text-center font-medium text-zinc-500">
+                    {product.asOfDate}
                   </td>
                   <td className="px-6 py-4 text-right">
                     <div className="flex items-center justify-end gap-2">
@@ -274,6 +280,17 @@ export default function ProductsPage() {
                     <option value="BOX">BOX (Wholesale Box)</option>
                   </select>
                 </div>
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-[10px] font-black uppercase tracking-widest text-zinc-400 ml-1">As of Date</label>
+                <input 
+                  type="date" 
+                  className="w-full px-5 py-3.5 bg-zinc-50 border border-zinc-200 rounded-2xl focus:ring-2 focus:ring-orange-500/20 outline-none dark:bg-zinc-800 dark:border-zinc-700 transition-all font-bold"
+                  value={newProduct.asOfDate}
+                  onChange={(e) => setNewProduct({...newProduct, asOfDate: e.target.value})}
+                  required
+                />
               </div>
 
               <div className="space-y-2">

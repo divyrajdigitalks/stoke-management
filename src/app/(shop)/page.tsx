@@ -1,8 +1,8 @@
 "use client";
 
-import { useState } from "react";
-import { Plus, Minus, ShoppingCart, Star, ArrowRight } from "lucide-react";
-import { motion } from "framer-motion";
+import { useState, useEffect } from "react";
+import { Plus, Minus, ShoppingCart, Star, ArrowRight, Lock, EyeOff } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
 
 const categories = [
@@ -74,12 +74,69 @@ const products = [
 export default function ShopHomePage() {
   const [activeCategory, setActiveCategory] = useState("all");
   const [quantities, setQuantities] = useState<Record<number, number>>({});
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [showLoginModal, setShowLoginModal] = useState(false);
 
-  const updateQuantity = (id: number, delta: number) => {
-    setQuantities(prev => ({
-      ...prev,
-      [id]: Math.max(0, (prev[id] || 0) + delta)
-    }));
+  // Load auth state
+  useEffect(() => {
+    const auth = localStorage.getItem("shop_auth");
+    if (auth) setIsLoggedIn(true);
+  }, []);
+
+  const handleLogin = () => {
+    localStorage.setItem("shop_auth", "true");
+    setIsLoggedIn(true);
+    setShowLoginModal(false);
+  };
+
+  const handleLogout = () => {
+    localStorage.removeItem("shop_auth");
+    setIsLoggedIn(false);
+  };
+
+  const updateQuantity = (id: number, delta: number, maxStock: number) => {
+    setQuantities(prev => {
+      const current = prev[id] || 0;
+      const next = current + delta;
+      
+      if (next > maxStock) return { ...prev, [id]: maxStock };
+      if (next < 0) return { ...prev, [id]: 0 };
+      
+      return { ...prev, [id]: next };
+    });
+  };
+
+  const handleManualQuantity = (id: number, val: string, maxStock: number) => {
+    const num = parseInt(val) || 0;
+    if (num > maxStock) {
+      setQuantities(prev => ({ ...prev, [id]: maxStock }));
+    } else {
+      setQuantities(prev => ({ ...prev, [id]: num }));
+    }
+  };
+
+  const addToCart = (product: any) => {
+    const qty = quantities[product.id] || 0;
+    if (qty <= 0) return;
+
+    const cart = JSON.parse(localStorage.getItem("shop_cart") || "[]");
+    const existingIndex = cart.findIndex((item: any) => item.id === product.id);
+
+    if (existingIndex >= 0) {
+      cart[existingIndex].quantity += qty;
+    } else {
+      cart.push({
+        ...product,
+        quantity: qty
+      });
+    }
+
+    localStorage.setItem("shop_cart", JSON.stringify(cart));
+    window.dispatchEvent(new Event("cartUpdated"));
+    alert(`${qty} ${product.unit} of ${product.name} added to order!`);
+    
+    // Reset quantity after adding
+    setQuantities(prev => ({ ...prev, [product.id]: 0 }));
   };
 
   const filteredProducts = activeCategory === "all" 
@@ -103,9 +160,21 @@ export default function ShopHomePage() {
           <h1 className="text-4xl md:text-5xl font-black text-white mb-4 leading-tight">Elite Textile <br />Wholesale Hub</h1>
           <p className="text-zinc-300 mb-6 text-lg">Direct from manufacturers. Best prices on Sarees, Kurtis, and Lehengas for your boutique.</p>
           <div className="flex gap-4">
-            <button className="flex items-center gap-2 px-8 py-3 bg-white text-black rounded-full font-bold hover:bg-orange-500 hover:text-white transition-all transform hover:-translate-y-1">
-              Explore All <ArrowRight className="w-4 h-4" />
-            </button>
+            {!isLoggedIn ? (
+              <button 
+                onClick={() => window.location.href = "/login"}
+                className="flex items-center gap-2 px-8 py-3 bg-white text-black rounded-full font-bold hover:bg-orange-500 hover:text-white transition-all transform hover:-translate-y-1"
+              >
+                Login to Order <Lock className="w-4 h-4" />
+              </button>
+            ) : (
+              <button 
+                onClick={handleLogout}
+                className="flex items-center gap-2 px-8 py-3 bg-zinc-800 text-white rounded-full font-bold hover:bg-red-600 transition-all transform hover:-translate-y-1"
+              >
+                Logout Account
+              </button>
+            )}
           </div>
         </div>
       </div>
@@ -136,63 +205,87 @@ export default function ShopHomePage() {
           <motion.div
             layout
             key={product.id}
-            initial={{ opacity: 0, scale: 0.9 }}
-            animate={{ opacity: 1, scale: 1 }}
-            className="group bg-white rounded-2xl border border-zinc-200 overflow-hidden hover:shadow-xl transition-all duration-300 dark:bg-zinc-900 dark:border-zinc-800"
+            initial={{ opacity: 0, scale: 0.9, rotateY: 20 }}
+            animate={{ opacity: 1, scale: 1, rotateY: 0 }}
+            whileHover={{ y: -10, rotateX: 2, rotateY: -2 }}
+            transition={{ type: "spring", stiffness: 300, damping: 20 }}
+            onClick={() => !isLoggedIn && (window.location.href = "/login")}
+            className={cn(
+              "group bg-white rounded-2xl border border-zinc-200 overflow-hidden hover:shadow-2xl transition-all duration-500 dark:bg-zinc-900 dark:border-zinc-800 perspective-1000",
+              !isLoggedIn && "cursor-pointer"
+            )}
           >
             <div className="relative h-48 bg-zinc-100 overflow-hidden dark:bg-zinc-800">
               <img 
                 src={product.image} 
                 alt={product.name} 
-                className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
               />
               {product.stock < 20 && (
-                <div className="absolute top-3 left-3 px-2 py-1 bg-red-500 text-white text-[10px] font-bold rounded uppercase">
+                <div className="absolute top-3 left-3 px-2 py-1 bg-red-500 text-white text-[10px] font-bold rounded uppercase z-10">
                   Low Stock
+                </div>
+              )}
+
+              {/* Login Overlay */}
+              {!isLoggedIn && (
+                <div 
+                  className="absolute inset-0 z-20 flex flex-col items-center justify-center bg-black/40 backdrop-blur-sm opacity-0 group-hover:opacity-100 transition-opacity duration-300 px-6 text-center"
+                >
+                  <Lock className="w-8 h-8 text-white mb-2" />
+                  <p className="text-white text-xs font-black uppercase tracking-widest mb-4">Login to View Details</p>
+                  <button 
+                    className="px-4 py-2 bg-orange-600 text-white text-[10px] font-bold rounded-full uppercase tracking-tighter hover:bg-orange-700 transition-colors"
+                  >
+                    Login Now
+                  </button>
                 </div>
               )}
             </div>
             
-            <div className="p-4 space-y-3">
+            <div className={cn(
+              "p-4 space-y-3 transition-all duration-500",
+              !isLoggedIn && "blur-md pointer-events-none select-none grayscale opacity-40"
+            )}>
               <div>
                 <p className="text-[10px] text-orange-600 font-bold uppercase tracking-wider mb-1">{product.category}</p>
                 <h3 className="font-bold text-zinc-900 line-clamp-1 dark:text-white">{product.name}</h3>
                 <p className="text-xs text-zinc-500">{product.unit} Unit</p>
               </div>
 
-              <div className="flex items-end justify-between">
-                <div>
-                  <p className="text-lg font-black text-zinc-900 dark:text-white">₹ {product.price}</p>
-                  <p className="text-[10px] text-green-600 font-medium">Bulk Price Available</p>
-                </div>
-                <div className="text-right">
-                  <p className="text-xs text-zinc-400">Stock</p>
-                  <p className="text-sm font-bold text-zinc-700 dark:text-zinc-300">{product.stock}</p>
-                </div>
-              </div>
+          
 
               {/* Quantity Selector & Add Button */}
               <div className="flex flex-col gap-2 pt-2">
                 <div className="flex items-center justify-between bg-zinc-50 rounded-lg p-1 dark:bg-zinc-800">
                   <button 
-                    onClick={() => updateQuantity(product.id, -1)}
+                    onClick={() => updateQuantity(product.id, -1, product.stock)}
                     className="p-1 text-zinc-500 hover:bg-white rounded-md transition-colors dark:hover:bg-zinc-700"
                   >
                     <Minus className="w-4 h-4" />
                   </button>
-                  <span className="font-bold text-sm w-8 text-center">{quantities[product.id] || 0}</span>
+                  <input 
+                    type="number"
+                    value={quantities[product.id] || 0}
+                    onChange={(e) => handleManualQuantity(product.id, e.target.value, product.stock)}
+                    className="bg-transparent font-bold text-sm w-12 text-center focus:outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                  />
                   <button 
-                    onClick={() => updateQuantity(product.id, 1)}
+                    onClick={() => updateQuantity(product.id, 1, product.stock)}
                     className="p-1 text-zinc-500 hover:bg-white rounded-md transition-colors dark:hover:bg-zinc-700"
                   >
                     <Plus className="w-4 h-4" />
                   </button>
                 </div>
                 <button 
+                  onClick={(e) => {
+                    e.stopPropagation(); // Prevent card redirect
+                    addToCart(product);
+                  }}
                   className={cn(
                     "w-full py-2.5 rounded-lg flex items-center justify-center gap-2 font-bold text-sm transition-all",
                     (quantities[product.id] || 0) > 0
-                      ? "bg-orange-600 text-white hover:bg-orange-700 shadow-lg shadow-orange-500/20"
+                      ? "bg-orange-600 text-white hover:bg-orange-700 shadow-lg shadow-orange-500/20 active:scale-95"
                       : "bg-zinc-100 text-zinc-400 cursor-not-allowed dark:bg-zinc-800"
                   )}
                   disabled={!(quantities[product.id] > 0)}
@@ -202,6 +295,16 @@ export default function ShopHomePage() {
                 </button>
               </div>
             </div>
+
+            {/* Hidden Message for Non-Logged In */}
+            {!isLoggedIn && (
+              <div className="absolute bottom-6 left-0 right-0 text-center z-10">
+                <div className="flex items-center justify-center gap-2 text-zinc-400">
+                  <EyeOff className="w-4 h-4" />
+                  <span className="text-[10px] font-black uppercase tracking-widest">Details Hidden</span>
+                </div>
+              </div>
+            )}
           </motion.div>
         ))}
       </div>
